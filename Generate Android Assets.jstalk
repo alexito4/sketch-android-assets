@@ -85,6 +85,49 @@ library.sandbox = {
             result[key] = factors[key] / baseDensityFactor;
         }
         return result;
+    },
+    determineDefaultDir: function(documentUrl) {
+        var configFile = this.findConfigFile(documentUrl);
+        if (configFile == null) {
+            log("No config file found");
+        } else {
+            var fileContents = [NSString stringWithContentsOfFile:configFile];
+
+            if (fileContents != null) {
+                if (hit = fileContents.match(/^default_dir:(.+)/m)) {
+                    var path = hit[1];
+                    log("Found default directory: " + path);
+                    return path;
+                } else {
+                    log("Found config file, but no default_dir specified in it");
+                }
+            } else {
+                log("fileContents is null!");
+            }
+        }
+        log("Returning default default directory");
+        return null;
+    },
+    // Assumes the default_dir is not present.
+    saveDefaultDir: function(documentUrl, dir) {
+        var _contents = "";
+        var configFile = this.findConfigFile(documentUrl);
+        if (configFile == null) {
+            log("No config file found");
+        } else {
+            var fileManager = [NSFileManager defaultManager];
+            _contents = [NSString stringWithContentsOfFile:configFile];
+        }
+
+        _contents += "default_dir:"+dir+"\n";
+        var contents = [NSString stringWithString:_contents];
+
+        var path = library.sandbox.getDocumentConfigFilePath(documentUrl);
+        log("Will save config file into " + path);
+        var result = [contents writeToURL:path atomically:true];
+        log("Result is " + result);
+
+        log("Saved default directory");
     }
 }
 
@@ -111,7 +154,12 @@ function main() {
 
     var factors = library.sandbox.getDensityFactors(density);
 
-    var base_dir = get_dir_from_prompt(get_cwd());
+    var base_dir = library.sandbox.determineDefaultDir([doc fileURL]);
+    if (base_dir == null) {
+      base_dir = get_dir_from_prompt(get_cwd());
+      library.sandbox.saveDefaultDir([doc fileURL], base_dir);
+    }
+
     if (base_dir == null) {
         alert("Not saving any assets");
         return;
