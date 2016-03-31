@@ -167,11 +167,15 @@ function main() {
 
     //process the selected slices
     var slicesToOutput = selection;
+    var open = true
     library.sandbox.forEachObj(slicesToOutput, function(slice) {
-        process_slice(slice, doc, base_dir, factors);
+        var saved = process_slice(slice, doc, base_dir, factors);
+        open = open && saved
     });
 
-    library.sandbox.openInFinder(base_dir + "/drawable-hdpi");
+    if (open) {
+      library.sandbox.openInFinder(base_dir + "/drawable-hdpi");
+    }
 }
 
 function alert(msg) {
@@ -241,14 +245,36 @@ function process_slice(slice, doc, base_dir, factors) {
     var frame = [slice frame];
     var slice_name = [slice name];
 
+    var overwriteConfirmed = false;
+
     for (var name in factors) {
         var factor = factors[name];
         log("Processing " + slice_name + " " + name + " (" + factor + ")");
         var version = copy_layer_with_factor(slice, factor);
-        var file_name = base_dir + "/drawable-" + name + "/" + santize(slice_name) + ".png";
+        var export_name = santize(slice_name);
+        var file_name = base_dir + "/drawable-" + name + "/" + export_name + ".png";
+
+        if (NSFileManager.defaultManager().fileExistsAtPath(file_name)
+        && !overwriteConfirmed) {
+          var nsalert = [[NSAlert alloc] init];
+          [nsalert setMessageText:"" + export_name + " already exists. Are you sure you want to overwrite?"];
+          [nsalert addButtonWithTitle:'Overwrite!']
+          [nsalert addButtonWithTitle:'Cancel']
+
+          var responseCode = [nsalert runModal]
+
+          if (responseCode == NSAlertFirstButtonReturn) {
+            overwriteConfirmed = true
+          } else {
+            return false;
+          }
+        }
+
         [doc saveArtboardOrSlice: version toFile:file_name];
         log("Saved " + file_name);
     }
+
+    return true;
 }
 
 function copy_layer_with_factor(original_slice, factor) {
