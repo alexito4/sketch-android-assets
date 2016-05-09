@@ -25,7 +25,7 @@ library.sandbox = {
         [finder_task setArguments:open_finder_args];
         [finder_task launch];
     },
-    configFileName: ".android_assets",
+    configFileName: "export_config",
     getDocumentConfigFilePath: function(documentUrl) {
         var localConfigFile = [[documentUrl URLByDeletingLastPathComponent] URLByAppendingPathComponent: library.sandbox.configFileName];
         return localConfigFile;
