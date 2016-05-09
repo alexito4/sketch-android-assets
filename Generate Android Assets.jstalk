@@ -134,7 +134,7 @@ library.sandbox = {
 function main() {
     var fileUrl = [doc fileURL];
     if (fileUrl == null) {
-        alert("You need to save your document for me to know where to save it");
+        alert("You need to save your document for me to know where to save it.");
         return;
     }
 
@@ -279,7 +279,9 @@ function process_slice(slice, doc, base_dir, factors) {
 
 function copy_layer_with_factor(original_slice, factor) {
     var copy = [original_slice duplicate];
-    var rect = copy.className() == "MSArtboardGroup" ? rect = copy.absoluteRect().rect() : copy.absoluteInfluenceRect()
+    // `absoluteRect` and others report a wrong size by 1px.
+    // var rect = copy.className() == "MSArtboardGroup" ? rect = copy.absoluteRect().rect() : copy.absoluteInfluenceRect()
+    var rect = copy.rect();
     var slice = MSExportRequest.requestWithRect_scale(rect, factor)
     [copy removeFromParent];
     return slice;
